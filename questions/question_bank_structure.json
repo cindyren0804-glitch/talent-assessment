@@ -1,0 +1,67 @@
+{
+  "version": "1.0",
+  "description": "天赋测评题库 - 按人群分类的迫选题",
+  "question_count_per_group": 20,
+  "time_limit_seconds": 20,
+  "dimensions": {
+    "input": {
+      "name": "输入端",
+      "theme_a": {"id": "gather", "name": "广度涉猎", "alias": "搜集"},
+      "theme_b": {"id": "focus", "name": "深度死磕", "alias": "专注"}
+    },
+    "process": {
+      "name": "处理端",
+      "theme_a": {"id": "analyze", "name": "逻辑推演", "alias": "分析"},
+      "theme_b": {"id": "empathy", "name": "情绪感知", "alias": "共情"}
+    },
+    "output": {
+      "name": "输出端",
+      "theme_a": {"id": "system", "name": "建立规则", "alias": "系统构建"},
+      "theme_b": {"id": "execute", "name": "具体执行", "alias": "执行力"}
+    },
+    "drive": {
+      "name": "动力端",
+      "theme_a": {"id": "achievement", "name": "成就驱动", "alias": "结果导向"},
+      "theme_b": {"id": "meaning", "name": "意义驱动", "alias": "价值导向"}
+    }
+  },
+  "user_groups": [
+    "职场新人",
+    "中层管理",
+    "待业求职",
+    "创业者",
+    "自由职业",
+    "学生",
+    "其他"
+  ],
+  "collision_pairs": [
+    {"a": "gather", "b": "focus", "domain": "input"},
+    {"a": "gather", "b": "analyze", "domain": "cross"},
+    {"a": "gather", "b": "empathy", "domain": "cross"},
+    {"a": "gather", "b": "system", "domain": "cross"},
+    {"a": "gather", "b": "execute", "domain": "cross"},
+    {"a": "gather", "b": "achievement", "domain": "cross"},
+    {"a": "gather", "b": "meaning", "domain": "cross"},
+    {"a": "focus", "b": "analyze", "domain": "cross"},
+    {"a": "focus", "b": "empathy", "domain": "cross"},
+    {"a": "focus", "b": "system", "domain": "cross"},
+    {"a": "focus", "b": "execute", "domain": "cross"},
+    {"a": "focus", "b": "achievement", "domain": "cross"},
+    {"a": "focus", "b": "meaning", "domain": "cross"},
+    {"a": "analyze", "b": "empathy", "domain": "process"},
+    {"a": "analyze", "b": "system", "domain": "cross"},
+    {"a": "analyze", "b": "execute", "domain": "cross"},
+    {"a": "analyze", "b": "achievement", "domain": "cross"},
+    {"a": "analyze", "b": "meaning", "domain": "cross"},
+    {"a": "empathy", "b": "system", "domain": "cross"},
+    {"a": "empathy", "b": "execute", "domain": "cross"},
+    {"a": "empathy", "b": "achievement", "domain": "cross"},
+    {"a": "empathy", "b": "meaning", "domain": "cross"},
+    {"a": "system", "b": "execute", "domain": "output"},
+    {"a": "system", "b": "achievement", "domain": "cross"},
+    {"a": "system", "b": "meaning", "domain": "cross"},
+    {"a": "execute", "b": "achievement", "domain": "cross"},
+    {"a": "execute", "b": "meaning", "domain": "cross"},
+    {"a": "achievement", "b": "meaning", "domain": "drive"}
+  ]
+}
