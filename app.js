@@ -1005,25 +1005,6 @@ function showDynamicQuestion() {
     showQuickReplies(qa.quickReplies);
 }
 
-// 显示问题
-function showQuestion(roundIndex) {
-    const dialog = fiveWhyDialogs[fiveWhyState.conversationPath];
-    const round = dialog.rounds[roundIndex];
-    
-    if (!round) {
-        completeDialog();
-        return;
-    }
-    
-    let question = round.question;
-    if (typeof question === 'function' && fiveWhyState.answers.length > 0) {
-        question = question(fiveWhyState.answers[fiveWhyState.answers.length - 1]);
-    }
-    
-    addSystemMessage(question);
-    showQuickReplies(round.quickReplies);
-}
-
 // 添加系统消息
 function addSystemMessage(text) {
     const chatMessages = document.getElementById('chat-messages');
@@ -1082,7 +1063,7 @@ function sendMessage() {
     const input = document.getElementById('user-input');
     const text = input.value.trim();
     
-    if (!text) return;
+    if (!text || fiveWhyState.isComplete) return;
     
     addUserMessage(text);
     fiveWhyState.answers.push(text);
@@ -1091,7 +1072,7 @@ function sendMessage() {
     
     setTimeout(() => {
         if (fiveWhyState.currentRound < 4) {
-            showQuestion(fiveWhyState.currentRound);
+            showDynamicQuestion();
         } else {
             completeDialog();
         }
