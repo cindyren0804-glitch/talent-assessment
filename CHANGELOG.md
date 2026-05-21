@@ -2,6 +2,29 @@
 
 ---
 
+## v1.7 - 2026-05-21
+
+### 修复
+- 🐛 移除 `showQuestion()` 旧版遗留函数，该函数引用了未定义的 `fiveWhyDialogs` 对象
+- 🐛 `sendMessage()` 改为调用 `showDynamicQuestion()`，与新版 5Why 系统对接
+- 用户手动输入文字点击发送不再崩溃
+
+---
+
+## v1.6 - 2026-05-21
+
+### 新增
+- 🚀 首次部署上线！GitHub Pages 部署
+- 创建 GitHub 仓库并推送主分支
+- 配置 GitHub Pages，使用 gh-pages 分支
+- 测试地址：https://cindyren0804-glitch.github.io/talent-assessment/
+
+### 技术
+- 使用 git subtree 部署 web/ 目录到 gh-pages 分支
+- GitHub Pages 自动构建部署
+
+---
+
 ## v1.1 - 2026-03-05
 
 ### 新增
