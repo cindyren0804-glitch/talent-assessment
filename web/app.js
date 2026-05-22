@@ -240,11 +240,12 @@ function updateTimerDisplay() {
     const percentage = (timeLeft / 20) * 100;
     document.getElementById('timer-fill').style.width = percentage + '%';
     
-    // 时间少于5秒变红色
+    // 时间少于5秒变红色 + 警告动画
+    const timerEl = document.querySelector('.timer');
     if (timeLeft <= 5) {
-        document.getElementById('timer-fill').style.background = '#ef4444';
+        timerEl.classList.add('warning');
     } else {
-        document.getElementById('timer-fill').style.background = '';
+        timerEl.classList.remove('warning');
     }
 }
 
