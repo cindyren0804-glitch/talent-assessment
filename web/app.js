@@ -353,28 +353,32 @@ const themeData = {
 
 // 角色类型定义
 const roleTypes = {
-    '系统架构师型': {
+    '战略家': {
         avatar: '🏗️',
+        image: 'role-strategist.png',
         themes: ['系统', '分析', '专注', '成就', '搜集'],
         tagline: '你喜欢把事情理清楚、搭好框架，让复杂变有序，是大家眼里的"靠谱担当"。',
         domainScores: { strategic_thinking: 85, execution: 78, influence: 52, relationship: 45 }
     },
-    '探索者型': {
+    '探索者': {
         avatar: '🔭',
+        image: 'role-explorer.png',
         themes: ['搜集', '分析', '意义', '专注', '共情'],
-        tagline: '你充满好奇心，喜欢探索新事物，同时追求深度和意义。',
+        tagline: '你充满好奇心，喜欢探索新事物，对世界有着永不满足的求知欲。',
         domainScores: { strategic_thinking: 82, execution: 45, influence: 48, relationship: 65 }
     },
-    '执行专家型': {
+    '行动派': {
         avatar: '⚡',
+        image: 'role-doer.png',
         themes: ['执行', '成就', '系统', '专注', '分析'],
-        tagline: '你是结果导向的行动派，能把事情稳稳地做成。',
+        tagline: '你是结果导向的行动派，能把想法快速落地，是团队里最可靠的推进器。',
         domainScores: { strategic_thinking: 65, execution: 92, influence: 70, relationship: 38 }
     },
-    '关系构建者型': {
+    '连接者': {
         avatar: '🤝',
+        image: 'role-connector.png',
         themes: ['共情', '搜集', '意义', '分析', '执行'],
-        tagline: '你善于理解他人，是团队里的情感纽带。',
+        tagline: '你善于理解他人、建立连接，是团队的温暖核心和精神纽带。',
         domainScores: { strategic_thinking: 58, execution: 52, influence: 62, relationship: 88 }
     }
 };
@@ -401,13 +405,11 @@ function calculateResults() {
         .slice(0, 5)
         .map(([theme, score]) => ({ theme, score }));
     
-    // 确定角色类型（简化版：根据第一天赋匹配）
-    const topTheme = sortedThemes[0].theme;
-    let roleType = '系统架构师型';
-    
-    if (topTheme === '搜集') roleType = '探索者型';
-    else if (topTheme === '执行') roleType = '执行专家型';
-    else if (topTheme === '共情') roleType = '关系构建者型';
+    // 确定角色类型
+    let roleType = '战略家';
+    if (topTheme === '搜集') roleType = '探索者';
+    else if (topTheme === '执行') roleType = '行动派';
+    else if (topTheme === '共情') roleType = '连接者';
     
     return {
         top5: sortedThemes,
@@ -426,8 +428,8 @@ function finishQuiz() {
     // 模拟分析时间
     setTimeout(() => {
         generateReport(results);
-        // 先进入5Why深挖，而不是角色概览
-        goToPage('report-5why');
+        // 先进入角色概览
+        goToPage('report-role');
         // 初始化对话
         setTimeout(() => {
             initFiveWhyDialog();
@@ -442,9 +444,25 @@ function generateReport(results) {
     
     // 更新角色概览
     const role = roleTypes[results.roleType];
+    
+    // 设置角色图片
+    const roleImg = document.getElementById('role-img');
+    if (roleImg && role.image) {
+        roleImg.src = role.image;
+        roleImg.alt = results.roleType;
+    }
+    
+    // 设置角色标签
+    const roleBadge = document.getElementById('role-badge');
+    if (roleBadge) {
+        roleBadge.textContent = '你的天赋类型';
+    }
+    
     document.getElementById('role-name').textContent = results.roleType;
     document.getElementById('role-desc').textContent = role.tagline;
-    document.getElementById('role-avatar').textContent = role.avatar;
+    
+    // 生成TOP 5天赋卡片
+    generateTopTalents(results.top5);
     
     // 更新维度详情
     updateDimensionsDetail(results);
@@ -457,6 +475,24 @@ function generateReport(results) {
     
     // 生成温柔建议
     generateSuggestions(results.top5);
+}
+
+// 生成TOP 5天赋卡片
+function generateTopTalents(top5) {
+    const container = document.getElementById('top-talents');
+    if (!container) return;
+    
+    container.innerHTML = top5.map((item, index) => {
+        const info = themeData[item.theme];
+        const rank = index + 1;
+        const rankClass = rank <= 2 ? `rank-${rank}` : '';
+        return `
+            <div class="talent-chip ${rankClass}">
+                <span class="chip-icon">${info.icon}</span>
+                <span>${info.name}</span>
+            </div>
+        `;
+    }).join('');
 }
 
 // 更新维度详情
@@ -763,8 +799,6 @@ const dynamic5Why = {
         
         const patterns = [];
         
-        // 检测高天赋（某一方面特别强）
-        const maxCount = Math.max(...Object.values(themeCounts));
         const topThemes = Object.entries(themeCounts)
             .filter(([_, count]) => count >= 4)
             .map(([theme, _]) => theme);
@@ -777,20 +811,17 @@ const dynamic5Why = {
             });
         }
         
-        // 检测矛盾/缠绕（两个方面都很强）
         const strongThemes = Object.entries(themeCounts)
             .filter(([_, count]) => count >= 3)
             .map(([theme, _]) => theme);
         
         if (strongThemes.length >= 2) {
-            // 检查是否是矛盾组合
             const contradictions = [
-                ['搜集', '专注'],  // 广度 vs 深度
-                ['系统', '执行'],  // 规划 vs 行动
-                ['成就', '意义'],  // 外在 vs 内在
-                ['分析', '共情']   // 理性 vs 感性
+                ['搜集', '专注'],
+                ['系统', '执行'],
+                ['成就', '意义'],
+                ['分析', '共情']
             ];
-            
             for (const [t1, t2] of contradictions) {
                 if (strongThemes.includes(t1) && strongThemes.includes(t2)) {
                     patterns.push({
@@ -802,7 +833,6 @@ const dynamic5Why = {
             }
         }
         
-        // 如果没有检测到明显模式，使用最强的天赋
         if (patterns.length === 0) {
             const strongestTheme = Object.entries(themeCounts)
                 .sort((a, b) => b[1] - a[1])[0][0];
@@ -816,152 +846,301 @@ const dynamic5Why = {
         return patterns;
     },
     
+    // 分析用户回答的情感/话题倾向
+    analyzeResponse: (text, allAnswers) => {
+        const analysis = {
+            sentiment: 'neutral',
+            topics: [],
+            keyWords: []
+        };
+        
+        // 情感分析
+        const positiveWords = ['享受', '满足', '喜欢', '快乐', '开心', '充实', '成就', '自信', '擅长', '自然', '舒服', '热爱', '期待', '珍惜'];
+        const negativeWords = ['纠结', '焦虑', '害怕', '担心', '累', '压力', '迷茫', '矛盾', '挣扎', '痛苦', '疲惫', '烦躁', '后悔'];
+        const ambivalentWords = ['有时候', '但也', '虽然', '不过', '偶尔', '还行', '还好', '看情况'];
+        
+        let posCount = 0, negCount = 0, ambCount = 0;
+        positiveWords.forEach(w => { if (text.includes(w)) posCount++; });
+        negativeWords.forEach(w => { if (text.includes(w)) negCount++; });
+        ambivalentWords.forEach(w => { if (text.includes(w)) ambCount++; });
+        
+        if (posCount > negCount && posCount > ambCount) analysis.sentiment = 'positive';
+        else if (negCount > posCount && negCount > ambCount) analysis.sentiment = 'negative';
+        else if (ambCount > 0) analysis.sentiment = 'ambivalent';
+        
+        // 话题分析
+        if (text.includes('价值') || text.includes('认可') || text.includes('被看见') || text.includes('证明')) {
+            analysis.topics.push('validation');
+            analysis.keyWords.push('认可');
+        }
+        if (text.includes('安全') || text.includes('稳定') || text.includes('确定') || text.includes('踏实')) {
+            analysis.topics.push('security');
+            analysis.keyWords.push('安全感');
+        }
+        if (text.includes('完美') || text.includes('做好') || text.includes('怕做错') || text.includes('害怕失败')) {
+            analysis.topics.push('perfectionism');
+            analysis.keyWords.push('完美');
+        }
+        if (text.includes('别人') || text.includes('比较') || text.includes('落后') || text.includes('不如')) {
+            analysis.topics.push('comparison');
+            analysis.keyWords.push('比较');
+        }
+        if (text.includes('从小') || text.includes('小时候') || text.includes('以前') || text.includes('一直')) {
+            analysis.topics.push('childhood');
+            analysis.keyWords.push('早期经历');
+        }
+        if (text.includes('习惯') || text.includes('自然而然') || text.includes('没想过') || text.includes('没注意')) {
+            analysis.topics.push('autopilot');
+            analysis.keyWords.push('惯性');
+        }
+        if (text.includes('希望') || text.includes('想要') || text.includes('渴望') || text.includes('向往')) {
+            analysis.topics.push('aspiration');
+            analysis.keyWords.push('渴望');
+        }
+        
+        // 累积话题
+        if (allAnswers) {
+            const prevAnalysis = dynamic5Why._cumulativeTopics || {};
+            analysis.topics.forEach(t => { prevAnalysis[t] = (prevAnalysis[t] || 0) + 1; });
+            dynamic5Why._cumulativeTopics = prevAnalysis;
+        }
+        
+        return analysis;
+    },
+    
+    // 获取累积话题
+    getCumulativeTopics: () => {
+        return dynamic5Why._cumulativeTopics || {};
+    },
+    
+    // 重置累积话题
+    resetCumulativeTopics: () => {
+        dynamic5Why._cumulativeTopics = {};
+    },
+    
     // 根据模式生成开场白
     generateIntro: (patterns) => {
         const pattern = patterns[0];
         
         if (pattern.type === 'strength') {
             const data = themeData[pattern.theme];
-            return `我注意到你的测评结果中，${data.name}特别突出。${data.desc}，这种特质在你身上表现得很明显～`;
+            return `我注意到你的测评结果中，${data.name}特别突出——${data.desc}。这让你${data.behaviors[0]}，这种特质在你身上表现得很明显～能跟你聊聊这个吗？`;
         } else if (pattern.type === 'contradiction') {
             const [t1, t2] = pattern.themes;
             const data1 = themeData[t1];
             const data2 = themeData[t2];
-            return `我注意到你在测评中既表现出${data1.name}的特质（${data1.desc}），又有${data2.name}的倾向（${data2.desc}）。这两种力量在你身上似乎都在发挥作用～`;
+            return `我注意到你在测评中有一个很妙的模式——你既会${data1.desc}，又会${data2.desc}。这两种力量在你身上和谐共存，也挺有意思的～想跟你聊聊这个发现？`;
         }
         
         return '我注意到你的测评结果中有一些很有意思的模式，想跟你聊聊～';
     },
     
-    // 根据用户回答和当前对话状态生成下一个问题
+    // 递进式提问：每轮问题都基于用户上一轮的真实回答
     generateNextQuestion: (pattern, answers, round) => {
         const lastAnswer = answers[answers.length - 1] || '';
         const allAnswers = answers.join(' ');
+        const analysis = dynamic5Why.analyzeResponse(lastAnswer, allAnswers);
+        const cumulativeTopics = dynamic5Why.getCumulativeTopics();
         
-        // 第一轮：探索感受
+        // 引用用户上一轮的回答（提取关键短语）
+        const quoteUser = (maxLen) => {
+            if (!lastAnswer) return '';
+            let quote = lastAnswer;
+            if (maxLen && quote.length > maxLen) quote = quote.substring(0, maxLen) + '...';
+            return `你说"${quote}"——`;
+        };
+        
+        // === 第一轮：探索感受 ===
         if (round === 0) {
+            dynamic5Why.resetCumulativeTopics();
             if (pattern.type === 'strength') {
                 const data = themeData[pattern.theme];
                 return {
-                    question: `当你${data.behaviors[0]}的时候，通常是什么样的感觉？`,
-                    quickReplies: ['很享受，觉得这就是我应该做的事', '有时候也会累，但停不下来', '会有一种满足感', '其实没太注意，就是自然而然']
+                    question: `当你${data.behaviors[0]}的时候，那种感觉是什么样的？可以多说一点吗～`,
+                    quickReplies: ['感觉很投入很享受，时间过得特别快', '会有一种"对了，这就是我"的确认感', '其实挺累的，但就是停不下来', '好像也没特别想，就是自然而然会这样']
                 };
             } else if (pattern.type === 'contradiction') {
                 const [t1, t2] = pattern.themes;
                 return {
-                    question: `当${themeData[t1].name}和${themeData[t2].name}这两种需求同时出现时，你通常是什么感受？`,
-                    quickReplies: ['会觉得纠结，不知道该选哪个', '看情况，有时候选A有时候选B', '挺享受的，两者都想要', '其实有点焦虑，怕顾此失彼']
+                    question: `当${themeData[t1].desc}和${themeData[t2].desc}这两种声音同时出现的时候，心里是什么感受？`,
+                    quickReplies: ['会纠结，不知道该听哪个', '其实挺有意思的，感觉自己很丰富', '有时候会焦虑，怕顾此失彼', '看具体场景，不同时候倾向不同']
                 };
             }
         }
         
-        // 第二轮：深挖动机
+        // === 第二轮：深挖动机（基于第一轮回答） ===
         if (round === 1) {
-            // 根据上一轮回答调整问题
-            if (lastAnswer.includes('纠结') || lastAnswer.includes('焦虑')) {
+            if (analysis.sentiment === 'positive') {
+                const refWord = analysis.keyWords[0] || '这种感觉';
                 return {
-                    question: '那种纠结或焦虑的感觉，通常会在什么情况下出现？',
-                    quickReplies: ['做选择的时候', '看到别人有成果时', '时间不够用的时候', '被要求表态的时候']
+                    question: `${quoteUser(30)}听起来${refWord}对你来说挺重要的。能说说这种"对了"的感觉，在什么时刻尤其强烈吗？`,
+                    quickReplies: ['完成一件有挑战的事之后', '被别人认可或感谢的时候', '自己独处安静下来时', '好像不一定，随心情']
                 };
-            } else if (lastAnswer.includes('享受') || lastAnswer.includes('满足')) {
+            } else if (analysis.sentiment === 'negative') {
                 return {
-                    question: '那种满足或享受的感觉，对你来说重要在哪里呢？',
-                    quickReplies: ['让我觉得自己有价值', '是一种自我确认', '能带来安全感', '就是单纯的快乐']
+                    question: `${quoteUser(30)}听起来那种拉扯的感觉不太舒服。如果有机会让它变得轻松一点，你觉得最需要什么？`,
+                    quickReplies: ['希望有人告诉我不用急', '需要更清楚自己要什么', '想学会接受不完美', '可能只是时间问题']
                 };
             } else {
                 return {
-                    question: '你提到"自然而然"或"没太注意"，如果仔细感受一下，这背后是什么在驱动你呢？',
-                    quickReplies: ['可能是习惯吧', '觉得应该这样做', '不想落后于人', '内心的一种渴望']
+                    question: `${quoteUser(30)}你说得挺真实的。如果往回看，有没有某个时刻让你特别清晰地感受到这件事对你的影响？`,
+                    quickReplies: ['有一次印象特别深', '好像一直都有，很早就这样了', '某次比较大的变化之后', '说不上来，但确实存在']
                 };
             }
         }
         
-        // 第三轮：探索价值观
+        // === 第三轮：探索信念/意义层 ===
         if (round === 2) {
-            if (allAnswers.includes('价值') || allAnswers.includes('确认')) {
+            if (analysis.topics.includes('validation')) {
                 return {
-                    question: '这种对"价值"或"确认"的需要，你觉得是从什么时候开始有的呢？',
-                    quickReplies: ['从小就这样', '工作以后才有的', '某次经历之后', '一直都有，但越来越强烈']
+                    question: `${quoteUser(35)}我感觉到你很在意被认可和肯定。如果暂时没人看到你的努力，那种状态对你来说是什么感觉？`,
+                    quickReplies: ['会有点失落，动力会下降', '其实还好，我自己知道就行', '会怀疑是不是做得不够好', '就想做得更好让人看到']
                 };
-            } else if (allAnswers.includes('选择') || allAnswers.includes('纠结')) {
+            } else if (analysis.topics.includes('security')) {
                 return {
-                    question: '当面临选择时，你内心深处更害怕的是选错，还是怕错过？',
-                    quickReplies: ['更怕选错，怕走弯路', '更怕错过，怕后悔', '两者都怕', '其实还好，能接受']
+                    question: `${quoteUser(35)}你提到了"踏实"或"确定"的感觉，这种安全感为什么对你这么重要呢？`,
+                    quickReplies: ['不确定的状态让我很不安', '有安全感才能放心做事', '习惯了一切在掌控中', '可能是性格使然吧']
+                };
+            } else if (analysis.topics.includes('perfectionism')) {
+                return {
+                    question: `${quoteUser(35)}追求把事情做好当然是好事。但有没有"足够好"和"完美"之间的那个平衡点，你是怎么看这个的？`,
+                    quickReplies: ['确实很难把握，总是想再改改', '慢慢在学会放手了', '我觉得完美就是标准', '看事情的优先级，分情况']
+                };
+            } else if (analysis.topics.includes('comparison')) {
+                return {
+                    question: `${quoteUser(35)}你提到了和别人比较。这种比较是让你更有动力，还是更多是压力？`,
+                    quickReplies: ['更多是动力，但也累', '主要是压力，但又改不掉', '是一种参考，不会太当真', '以前在意，现在越来越少了']
                 };
             } else {
                 return {
-                    question: '如果想象一下自己最理想的状态，那会是什么样的呢？',
-                    quickReplies: ['能够兼顾各方面', '在一个领域做到顶尖', '被所有人认可', '内心平静满足']
+                    question: `${quoteUser(38)}如果想象一下你内心最自由的状态——没有任何外在要求，就只是你自己——那会是什么样的？`,
+                    quickReplies: ['做自己真正想做的事', '不用在意别人怎么看', '既有目标又不着急', '能接受各种状态的自己']
                 };
             }
         }
         
-        // 第四轮：追溯根源
+        // === 第四轮：追溯根源 ===
         if (round === 3) {
-            if (allAnswers.includes('从小') || allAnswers.includes('小时候')) {
+            if (cumulativeTopics['validation'] >= 2) {
                 return {
-                    question: '小时候的经历中，有没有哪个场景让你印象特别深刻，觉得"被看见"或"被认可"的感觉很好？',
-                    quickReplies: ['被表扬的时候', '比别人做得好的时候', '被关注的时候', '帮助别人被感谢的时候']
+                    question: `${quoteUser(35)}你多次提到认可和被看见。这种"想要被看见"的愿望，你最早是什么时候意识到的？`,
+                    quickReplies: ['小时候被表扬的印象很深', '学生时代成绩被关注', '工作后开始在意', '一直都有，但最近才意识到']
                 };
-            } else if (allAnswers.includes('工作') || allAnswers.includes('经历')) {
+            } else if (cumulativeTopics['security'] >= 2) {
                 return {
-                    question: '那次经历或工作后的变化，给你带来了什么样的影响？',
-                    quickReplies: ['让我更清楚自己要什么', '改变了我的价值观', '让我变得更谨慎', '激发了我的某方面潜能']
+                    question: `${quoteUser(35)}你反复提到对确定感的在意。回顾一下，这种模式是什么时候开始在你生活中出现的？`,
+                    quickReplies: ['可能是成长环境影响的', '经历过变动之后才开始', '性格里天生就有', '不太确定，但挺明显的']
+                };
+            } else if (cumulativeTopics['comparison'] >= 2) {
+                return {
+                    question: `${quoteUser(35)}比较成了一种习惯。这种习惯的源头，你能追溯到人生的哪个阶段吗？`,
+                    quickReplies: ['从小就被拿来和别人比', '工作以后竞争环境的影响', '自己对自己的要求', '社会大环境就是这样']
+                };
+            } else if (analysis.topics.includes('childhood')) {
+                return {
+                    question: `${quoteUser(35)}你提到了小时候。那段经历中，有没有一个画面或瞬间让你到现在还会想起来？`,
+                    quickReplies: ['有一个场景特别清晰', '更多的是整体的感觉', '不太记得具体的事', '有，但不太想说']
                 };
             } else {
                 return {
-                    question: '回顾这些感受，你觉得它们在你的人生中扮演着什么样的角色？',
-                    quickReplies: ['是我前进的动力', '有时候也是负担', '帮助我认识自己', '还在探索中']
+                    question: `${quoteUser(38)}聊了这么多，你觉得这些模式在你人生的哪个阶段留下的痕迹最深？`,
+                    quickReplies: ['小时候家庭的影响', '某段重要的工作经历', '某个重要的人或事', '不太确定，慢慢形成的']
+                };
+            }
+        }
+        
+        // === 第五轮：整合与反思 ===
+        if (round === 4) {
+            if (cumulativeTopics['aspiration'] >= 2 || analysis.topics.includes('aspiration')) {
+                return {
+                    question: `${quoteUser(38)}聊到这里，我想问一个更整体的问题——如果把你刚才描述的这些串起来，你觉得它们在一起构成了一个什么样的"你"？`,
+                    quickReplies: ['一个努力想要更好的人', '一个内心很丰富的人', '一个还在探索中的人', '一个知道自己要什么的人']
+                };
+            } else if (analysis.topics.includes('autopilot')) {
+                return {
+                    question: `${quoteUser(35)}你提到很多事好像"自然而然"。那如果给你一个机会，有意识地重新选择一种活法，你会保留什么，改变什么？`,
+                    quickReplies: ['保留这份踏实和专注', '想给自己多一点放松', '会少在意别人的看法', '其实现在这样就挺好']
+                };
+            } else {
+                return {
+                    question: `${quoteUser(38)}谢谢你愿意和我聊这些。最后想问你——如果用一个词或一句话来总结你对自己的这个发现，你会怎么形容？`,
+                    quickReplies: ['原来我一直在寻找确认', '我比想象中更丰富', '这些拉扯也是我的一部分', '还没想好，但开始看到了']
                 };
             }
         }
         
         return {
             question: '还有什么是你想分享的吗？',
-            quickReplies: ['没有了，谢谢', '我想补充一点...', '这让我想到...', '其实还有一个方面...']
+            quickReplies: ['没有了，谢谢你', '我还想补充一点', '这让我想到另外一件事']
         };
     },
     
     // 生成洞察总结
     generateInsights: (pattern, answers) => {
         const allAnswers = answers.join(' ');
+        const cumulativeTopics = dynamic5Why.getCumulativeTopics();
         
         let path = [];
         let impacts = [];
         let finalMessage = [];
         
+        // 根据实际对话内容构建发现路径
+        path = ['注意到了某种模式'];
+        if (cumulativeTopics['validation'] >= 2) path.push('渴望被认可和看见');
+        if (cumulativeTopics['security'] >= 2) path.push('追求确定感和掌控');
+        if (cumulativeTopics['comparison'] >= 1) path.push('习惯在比较中定位自己');
+        if (cumulativeTopics['perfectionism'] >= 1) path.push('对"足够好"有很高标准');
+        if (cumulativeTopics['aspiration'] >= 1) path.push('内心有期待和渴望');
+        if (cumulativeTopics['autopilot'] >= 1) path.push('很多模式在惯性中运行');
+        if (cumulativeTopics['childhood'] >= 1) path.push('与早期经历有关联');
+        
+        // 补充具体来源
+        if (allAnswers.includes('从小') || allAnswers.includes('小时候')) path.unshift('源于早期的经历');
+        if (allAnswers.includes('工作') || allAnswers.includes('社会')) path.unshift('在职场/社会中强化');
+        
+        if (path.length < 3) path = ['察觉到了某种倾向', '持续发挥着影响', '形成了独特的模式'];
+        
+        // 影响分析
+        impacts = [];
         if (pattern.type === 'strength') {
             const data = themeData[pattern.theme];
-            path = [`${data.name}的渴望`, '持续投入', '获得成就感', '形成正向循环'];
-            impacts = [
-                `在${data.name}相关的事情上表现出色`,
-                '可能会过度投入，忽略其他方面',
-                '遇到不擅长的领域容易挫败'
-            ];
-            finalMessage = [
-                `你对${data.name}的追求，是一种珍贵的天赋。`,
-                `同时也记得：你的价值不只在这一个维度，全面的你才是完整的你 ✨`
-            ];
+            impacts.push(`在${data.name}方面有天然的优势和投入`);
+            if (cumulativeTopics['validation'] >= 1) impacts.push('对他人认可的敏感既是动力也带来压力');
+            if (cumulativeTopics['perfectionism'] >= 1) impacts.push('高标准有时让行动变慢，但也保证了品质');
+            impacts.push('这份特质让你在某些领域比别人走得更深');
         } else if (pattern.type === 'contradiction') {
             const [t1, t2] = pattern.themes;
-            path = [`${themeData[t1].name}的渴望`, `${themeData[t2].name}的向往`, '内心的拉扯', '寻找平衡'];
-            impacts = [
-                '两种力量都很强，让你更加全面',
-                '做选择时容易纠结，消耗精力',
-                '可能会在不同状态间摇摆'
-            ];
-            finalMessage = [
-                '这种"既想要A又想要B"的心情，其实说明你有着丰富的内在世界。',
-                '不需要急着二选一，学会让两者和谐共存，是你独特的智慧 ✨'
-            ];
+            impacts.push(`同时具有${themeData[t1].name}和${themeData[t2].name}让你更全面`);
+            impacts.push('两种力量拉扯时可能消耗精力，但也让你视角更丰富');
+            if (cumulativeTopics['validation'] >= 1) impacts.push('在意外界评价，让内在矛盾更加明显');
+        }
+        if (impacts.length < 2) {
+            impacts.push('你的自我觉察本身就是一种力量');
+            impacts.push('看到模式，就是改变的开始');
         }
         
-        // 根据回答调整洞察
-        if (allAnswers.includes('价值') || allAnswers.includes('认可')) {
-            path[path.length - 1] = '确认自我价值';
-        }
-        if (allAnswers.includes('从小') || allAnswers.includes('小时候')) {
-            path.unshift('早期的经历');
+        // 最终信息
+        if (cumulativeTopics['validation'] >= 2) {
+            finalMessage = [
+                '你渴望被看见、被认可——这完全不是弱点。',
+                '恰恰相反，这说明你内心有一种"想要做得好"的认真和热忱。只是别忘了，在你被任何人看见之前，你已经足够值得被珍视了 ✨'
+            ];
+        } else if (cumulativeTopics['security'] >= 2) {
+            finalMessage = [
+                '追求确定感并不是软弱，而是一种对生活认真的态度。',
+                '只是有时候，最美的风景恰恰藏在那些不确定的转角里。偶尔放手，也许会有意外惊喜 ✨'
+            ];
+        } else if (pattern.type === 'contradiction') {
+            finalMessage = [
+                '你身上那些看似矛盾的地方，恰恰是你最独特的财富。',
+                '不用急着二选一。学会让它们在你体内和谐共处，是你最温柔的智慧 ✨'
+            ];
+        } else {
+            const data = pattern.type === 'strength' ? themeData[pattern.theme] : null;
+            finalMessage = [
+                data ? `你对${data.name}的投入，是一种珍贵的天赋。` : '你对自己的认识和敞开，本身就是一种勇气。',
+                '无论你走到哪里，都记得——你的价值不只来自结果，更来自你一路上的真诚和认真 ✨'
+            ];
         }
         
         return { path, impacts, finalMessage };
@@ -1051,7 +1230,7 @@ function selectReply(text) {
     
     // 显示下一个问题或完成
     setTimeout(() => {
-        if (fiveWhyState.currentRound < 4) {
+        if (fiveWhyState.currentRound < 5) {
             showDynamicQuestion();
         } else {
             completeDialog();
@@ -1072,7 +1251,7 @@ function sendMessage() {
     input.value = '';
     
     setTimeout(() => {
-        if (fiveWhyState.currentRound < 4) {
+        if (fiveWhyState.currentRound < 5) {
             showDynamicQuestion();
         } else {
             completeDialog();
