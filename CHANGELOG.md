@@ -2,6 +2,15 @@
 
 ---
 
+## v1.11.1 - 2026-05-28
+
+### 🐛 Bug 修复
+- 修复答题完成后卡在加载页面的严重 bug
+  - `calculateResults()` 中 `topTheme` 变量未定义，导致运行时 ReferenceError
+  - 添加 `const topTheme = sortedThemes[0]?.theme || ''` 修复
+
+---
+
 ## v1.11 - 2026-05-26
 
 ### 视觉 🎨
