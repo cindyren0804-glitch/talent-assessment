@@ -406,6 +406,7 @@ function calculateResults() {
         .map(([theme, score]) => ({ theme, score }));
     
     // 确定角色类型
+    const topTheme = sortedThemes[0]?.theme || '';
     let roleType = '战略家';
     if (topTheme === '搜集') roleType = '探索者';
     else if (topTheme === '执行') roleType = '行动派';
